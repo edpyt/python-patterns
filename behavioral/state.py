@@ -7,7 +7,7 @@ from abc import ABC
 
 
 class State(ABC):
-    def __init__(self, player: 'AudioPlayer') -> None:
+    def __init__(self, player: "AudioPlayer") -> None:
         self._player = player
 
     def click_lock(self) -> None:
@@ -55,13 +55,13 @@ class PlayingState(State):
         self._player.change_state(ReadyState(self._player))
 
     def click_next(self, event: str) -> None:
-        if event == 'double click':
+        if event == "double click":
             self._player.next_song()
         else:
             self._player.fast_forward(5)
 
     def click_previous(self, event: str) -> None:
-        if event == 'double click':
+        if event == "double click":
             self._player.previous()
         else:
             self._player.rewind(5)
@@ -69,7 +69,7 @@ class PlayingState(State):
 
 class AudioPlayer:
     def __init__(self) -> None:
-        self.state = ReadyState(self)    
+        self.state = ReadyState(self)
 
     def change_state(self, state: State) -> None:
         self.state = state
@@ -88,18 +88,18 @@ class AudioPlayer:
 
     def start_playback(self) -> None:
         ...
-    
+
     def stop_playback(self) -> None:
         ...
-    
+
     def next_song(self) -> None:
         ...
-    
+
     def previous_song(self) -> None:
         ...
-    
+
     def fast_forward(self, seconds: int) -> None:
         ...
-    
+
     def rewind(self, seconds: int) -> None:
         ...
