@@ -9,6 +9,8 @@ from typing import Protocol
 
 
 class Engine(Protocol):
+    """Интерфейс Двигатель"""
+
     horsepower: int
 
 
@@ -44,6 +46,8 @@ class Car:
 
 
 class Manual(Protocol):
+    """Интерфейс базового класса Справочник"""
+
     def info(self) -> str:
         ...
 
@@ -89,6 +93,8 @@ class CarManual(Manual):
 
 
 class Builder(Protocol):
+    """Интерфейс Строитель"""
+
     def reset(self) -> None:
         ...
 
