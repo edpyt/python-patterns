@@ -49,7 +49,7 @@ class Dialog:
     def render(self) -> None:
         """Фабричный метод"""
         ok_button: Button = self.create_button()
-        ok_button.on_click(close_dialog)
+        ok_button.on_click('close_dialog')
         ok_button.render()
 
     @abstractmethod

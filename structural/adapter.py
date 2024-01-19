@@ -1,42 +1,82 @@
-"""Создать класс, который будет унифицировать интерфейс"""
+"""
+Создать класс, который будет унифицировать интерфейс
+
+Это структурный паттерн проектирования, который позволяет объектам с
+несовместимыми интерфейсами работать вместе.
+"""
 
 
-from copy import copy
+from math import sqrt
 
 
-class Dog:
-    def woof(self) -> str:
-        return 'woof'
+class RoundHole:
+    """Круглая дыра"""
+
+    def __init__(self, radius: int) -> None:
+        self.radius = radius
+
+    def get_radius(self) -> float:
+        """Вернуть радиус отверстия"""
+
+        return self.radius
+
+    def fits(self, peg: 'RoundPeg') -> bool:
+        return self.get_radius() >= peg.get_radius()
 
 
-class Human:
-    def say(self) -> str:
-        return 'Hello!'
+class RoundPeg:
+    """Круглое колышко"""
+
+    def __init__(self, radius: int) -> None:
+        self.radius = radius
+
+    def get_radius(self) -> float:
+        """Вернуть радиус круглого колышка."""
+
+        return self.radius
 
 
-class Cat:
-    def meow(self) -> str:
-        return 'meow'
+class SquarePeg:
+    """Квадратное колышко"""
+
+    def __init__(self, width: int) -> None:
+        self.width = width
+
+    def get_width(self) -> int:
+        """Вернуть ширину квадратного колышка"""
+
+        return self.width
 
 
-class Adapter:
-    def __init__(self, obj: object, **adapted_methods) -> None:
-        self.obj = obj
-        self.__dict__.update(**adapted_methods)
+class SquarePegAdapter(RoundPeg):
+    """
+    Адаптер позволяет использовать квадратные колышки и круглые отверстия
+    вместе.
+    """
+
+    _peg: SquarePeg
+
+    def __init__(self, peg: SquarePeg) -> None:
+        self._peg = peg
+
+    def get_radius(self) -> float:
+        return self._peg.get_width() * sqrt(2) / 2
 
 
 if __name__ == '__main__':
-    dog = Dog()
-    dog_adapter = Adapter(dog, make_noise=dog.woof)
+    hole = RoundHole(5)
+    rpeg = RoundPeg(5)
+    assert hole.fits(rpeg)
 
-    cat = Cat()
-    cat_adapter = Adapter(cat, make_noise=cat.meow)
+    small_speg = SquarePeg(5)
+    large_speg = SquarePeg(10)
 
-    human = Human()
-    human_adapter = Adapter(human, make_noise=human.say)
+    try:
+        hole.fits(small_speg)
+    except AttributeError:
+        print('All good')
 
-    local_items = copy(locals()).items()
-
-    for k, v in local_items:
-        if k.endswith('_adapter'):
-            print(k, v.make_noise())
+    small_sqpeg_adapter = SquarePegAdapter(small_speg)
+    large_sqpeg_adapter = SquarePegAdapter(large_speg)
+    hole.fits(small_sqpeg_adapter)
+    hole.fits(large_sqpeg_adapter)
