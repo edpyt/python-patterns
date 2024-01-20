@@ -1,36 +1,80 @@
-"""Вместо абстракций создать отдельные классы с реализацией"""
+"""
+Мост - паттерны, который разделяет один или несколько классов на две отдельные
+иерархии — абстракцию и реализацию, позволяя изменять их независимо друг от
+друга
+"""
 
 
-class Drawing1:
-    def draw_circle(self, x, y, radius) -> None:
-        print(f'Drawing circle at {x} {y} with radius {radius}')
+from typing import Protocol
 
 
-class Drawing2:
-    def draw_circle(self, x, y, radius) -> None:
-        print(f'Drawing circle at {x} {y} with radius {radius}')
+class Device(Protocol):
+    @property
+    def is_enabled(self) -> None:
+        ...
+
+    def enable(self) -> None:
+        ...
+
+    def disable(self) -> None:
+        ...
+
+    def get_volume(self) -> None:
+        ...
+
+    def set_volume(self, percent: int | float) -> None:
+        ...
+
+    def get_channel(self) -> None:
+        ...
+
+    def set_channel(self, channel: int) -> None:
+        ...
 
 
-class CircleShape:
-    def __init__(
-            self,
-            x: int,
-            y: int,
-            radius: int,
-            drawing_api: Drawing1 | Drawing2
-    ) -> None:
-        self._x = x
-        self._y = y
-        self._radius = radius
-        self._drawing_api = drawing_api
+class Remote:
+    _device: "Device"
 
-    def draw(self) -> None:
-        self._drawing_api.draw_circle(self._x, self._y, self._radius)
+    def __init__(self, device: "Device") -> None:
+        self._device = device
+
+    def toggle_power(self) -> None:
+        if self._device.is_enabled:
+            self._device.disable()
+        else:
+            self._device.enable()
+
+    def volume_down(self) -> None:
+        self._device.set_volume(self._device.get_volume() - 10)
+
+    def volume_up(self) -> None:
+        self._device.set_volume(self._device.get_volume() + 10)
+
+    def channel_down(self) -> None:
+        self._device.set_channel(self._device.get_channel() - 1)
+
+    def channel_up(self) -> None:
+        self._device.set_channel(self._device.get_channel() + 1)
+
+
+class AdvancedRemote(Remote):
+    def mute(self) -> None:
+        self._device.set_volume(0)
+
+
+class TV(Device):
+    ...
+
+
+class Radio(Device):
+    ...
 
 
 if __name__ == '__main__':
-    circle_shape_1 = CircleShape(1, 2, 3, Drawing1())
-    circle_shape_2 = CircleShape(1, 2, 3, Drawing2())
+    tv = TV()
+    remote = Remote(tv)
+    remote.toggle_power()
 
-    for circle in [circle_shape_1, circle_shape_2]:
-        circle.draw()
+    radio = Radio()
+    remote = AdvancedRemote(radio)
+    remote.mute()
