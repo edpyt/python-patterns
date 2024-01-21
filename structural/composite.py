@@ -1,48 +1,113 @@
-"""Компоновать объекты"""
+"""
+Компоновщик - структурный паттерн проектирования, который позволяет
+сгруппировать множество объектов в древовидную структуру, а затем работать
+с ней так, как будто это единичный объект.
+"""
+from typing import Protocol
 
 
-class Graphic:
-    def render(self) -> None:
-        raise NotImplementedError
+class Graphic(Protocol):
+    """Общий интерфейс компонента"""
+
+    def move(self, x: float, y: float) -> None:
+        ...
+
+    def draw(self) -> None:
+        ...
 
 
-class CompositeGraphic(Graphic):
+class Dot(Graphic):
+    """Простой компонент"""
+
+    x: float
+    y: float
+
+    def __init__(self, x: float, y: float) -> None:
+        self.x = x
+        self.y = y
+
+    def move(self, x: float, y: float) -> None:
+        self.x += x
+        self.y += y
+
+    def draw(self) -> None:
+        """Нарисовать точку в координате X, Y"""
+
+        print(f'Нарисована точка в координате {self.x}, {self.y}')
+
+
+# Компоненты могут расширять другие компоненты
+class Circle(Dot):
+    radius: float
+
+    def __init__(self, x: float, y: float, radius: int) -> None:
+        super().__init__(x, y)
+        self.radius = radius
+
+    def draw(self) -> None:
+        """Нарисовать окружность в координате x, y и радиусом radius"""
+
+        print(
+            f'Нарисован круг в координате {self.x} {self.y} с радиусом:'
+            f' {self.radius}'
+        )
+
+
+# Контейнер содержит операции добавления/удаления дочерних компонентов.
+# Все стандартные операции интерфейса компонентов он делегирует каждому из
+# дочерних компонентов
+class CompoundGraphic(Graphic):
     def __init__(self) -> None:
-        self.graphics = []
+        self.children: list[Graphic] = []
 
-    def render(self) -> None:
-        for graphic in self.graphics:
-            graphic.render()
+    def add(self, child: Graphic) -> None:
+        self.children.append(child)
 
-    def add(self, graphic: Graphic) -> None:
-        self.graphics.append(graphic)
+    def remove(self, child: Graphic) -> None:
+        if child in self.children:
+            self.children.remove(child)
+
+    def move(self, x: float, y: float) -> None:
+        for child in self.children:
+            child.move(x, y)
+
+    def draw(self) -> None:
+        """
+        1. Для каждого дочернего компонента:
+            - Отрисовать компонент
+            - Определить координаты максимальной границы.
+        2. Нарисовать пунктирную границу вокруг всей области.
+        """
+        for children in self.children:
+            children.draw()
 
 
-class Ellipse(Graphic):
-    def __init__(self, name: str) -> None:
-        self._name = name
+class ImageEditor:
+    all_: CompoundGraphic
 
-    def render(self) -> None:
-        print(f'Ellipse with name: {self._name}')
+    def load(self) -> None:
+        self.all_ = CompoundGraphic()
+
+        self.all_.add(Dot(1, 2))
+        self.all_.add(Circle(5, 3, 10))
+
+    def group_selected(self, components: list[Graphic]) -> None:
+        group = CompoundGraphic()
+
+        for component in components:
+            group.add(component)
+            self.all_.remove(component)
+        self.all_.add(group)
+
+        # Все компоненты будут отрисованы
+        self.all_.draw()
 
 
 if __name__ == '__main__':
-    ellipse1 = Ellipse('1')
-    ellipse2 = Ellipse('2')
-    ellipse3 = Ellipse('3')
-    ellipse4 = Ellipse('4')
+    image_editor = ImageEditor()
 
-    graphic1 = CompositeGraphic()
-    graphic2 = CompositeGraphic()
+    image_editor.load()
 
-    graphic1.add(ellipse1)
-    graphic1.add(ellipse2)
-    graphic1.add(ellipse3)
-    graphic2.add(ellipse4)
+    components = [Dot(5, 4), Circle(8, 9, 5)]
 
-    graphic = CompositeGraphic()
-
-    graphic.add(graphic1)
-    graphic.add(graphic2)
-
-    graphic.render()
+    image_editor.group_selected(components)
