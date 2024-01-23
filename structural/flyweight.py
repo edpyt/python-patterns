@@ -86,7 +86,7 @@ class Tree:
 # Классы Tree и Forest являются клиентами Легковеса. При желании их можно
 # слить в один класс, если вам не нужно расширять класс деревьев далее.
 class Forest:
-    trees: set[Tree]
+    trees: set[Tree] = set()
 
     def plant_tree(
         self, x: float, y: float, name: str, color: str, texture: str
