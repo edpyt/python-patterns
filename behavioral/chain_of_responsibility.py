@@ -1,45 +1,94 @@
-import abc
-from typing import Any
+"""
+Цепочка обязанностей, поведенческий паттерн, который позволяет передавать запросы
+последовательно по цепочке обработчиков. Каждый последующий обработчик решает,
+может ли он обработать запрос сам и стоит ли передавать запрос дальше по цепи
+"""
+from abc import ABC
+from typing import Protocol
 
 
-class Handler(metaclass=abc.ABCMeta):
-    def __init__(self, successor: Any | None = None) -> None:
-        self.successor = successor
-
-    def handle(self, request: int) -> None:
-        res = self.check_range(request)
-        if not res and self.successor:
-            self.successor.handle(request)
-
-    @abc.abstractmethod
-    def check_range(self, request: int) -> None:
+class ComponentWithContextualHelp(Protocol):
+    def show_help(self) -> None:
         ...
 
 
-class ConcreteHandler0(Handler):
-    @staticmethod
-    def check_range(request: int) -> bool:
-        if 0 <= request <= 10:
-            print("request handled in 0")
-            return True
-        return False
+class Component(ABC, ComponentWithContextualHelp):
+    def __init__(self, tooltip_text: str) -> None:
+        self.tooltip_text: str | None = tooltip_text
+        # Контейнер, содержащий компонент, служит в качестве следующего
+        # звена цепочки
+        self._container: 'Container | None' = None
+
+    # Базовое поведение компонента заключается в том, чтобы показать
+    # всплывающую подсказку, если для неё задан текст.
+    # В обратном случае - перенаправить запрос своему контейнеру, если тот существует
+    def show_help(self) -> None:
+        if self.tooltip_text is not None:
+            print('Показать подсказку')
+        else:
+            self._container.show_help()
 
 
-class ConcreteHandler1(Handler):
-    start, end = 11, 20
+# Контейнеры могут включать в себя как простые компоненты, так и другие
+# контейнеры. Здесь формируются связи цепочки. Класс контейнера унаследует
+# метод show_help от своего родителя - базового компонента.
+class Container(Component):
+    def __init__(self, tooltip_text: str) -> None:
+        self._children: list[Component] = []
+        super().__init__(tooltip_text)
 
-    def check_range(self, request: int) -> bool:
-        if request in range(self.start, self.end + 1):
-            print('request handlen in 1')
-            return True
-        return False
+    def add(self, child: Component) -> None:
+        self._children.append(child)
+        child._container = self
 
 
-if __name__ == "__main__":
-    requests = [2, 3, 10, 12]
-    h0 = ConcreteHandler0()
-    h1 = ConcreteHandler1()
-    h0.successor = h1
+# Большинство примитивных компонентов устроит базовое поведение показа помощи
+# через подсказку, которое они унаследуют из класса Component
+class Button(Component):
+    ...
 
-    for request in requests:
-        h0.handle(request)
+
+# Но сложные компоненты могут переопределять метод показа помощи по-своему.
+# Но и в этом случае они всегда могут вернуться к базовой реализации, вызвав
+# метод родителя.
+class Panel(Container):
+    def __init__(self, x, y, width, height) -> None:
+        self.modal_help_text: str | None = None
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        super().__init__('')
+       
+    def show_help(self) -> None:
+        if self.modal_help_text is None:
+            print('Показать модальное окно')
+        else:
+            super().show_help()
+
+
+# То же, что и выше
+class Dialog(Container):
+    def __init__(self, tooltip_text: str) -> None:
+        self.wiki_page_url: str | None = None
+        super().__init__(tooltip_text)
+    
+    def show_help(self) -> None:
+        if self.wiki_page_url is not None:
+            print('Открыть страницу Wiki в браузере.')
+        else:
+            super().show_help()
+
+
+if __name__ == '__main__':
+    dialog = Dialog('Budget Reports')
+    dialog.wiki_page_url = 'https://wiki.com'
+    panel = Panel(0, 0, 400, 800)
+    panel.modal_help_text = 'This panel does...'
+    ok = Button(tooltip_text='OK')
+    ok.tooltip_text = 'This is an OK button'
+    cancel = Button('Cancel')
+
+    panel.add(ok)
+    panel.add(cancel)
+    dialog.add(panel)
