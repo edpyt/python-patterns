@@ -1,11 +1,11 @@
 """
 Это поведенческий паттерн проектирования, который создаёт механизм подписки,
-позволяющий одним объектам следить и реагировать на
-события, происходящие в других объектах.
+позволяющий одним объектам следить и реагировать на события, происходящие в
+других объектах.
 """
 
 from collections import defaultdict
-from typing import Any
+from typing import Any, Protocol
 
 
 class File:
@@ -17,6 +17,11 @@ class File:
 
 
 class EventManager:
+    """
+    Базовый класс-издатель. Содержит код управления подписчиками и их
+    оповещения
+    """
+
     def __init__(self) -> None:
         self._listeners = defaultdict([])
 
@@ -31,11 +36,21 @@ class EventManager:
             listener.update(data)
 
 
-class EventListener:
+class EventListener(Protocol):
+    """
+    Общий интерфейс подписчиков
+
+    Во многих языках, поддерживающих функциональные типы, можно обойтись без
+    этого интерфейса и конкретных классов, заменив объекты подписчиков
+    функциями.
+    """
+
     def update(self, filename: str) -> None:
         ...
 
 
+#  Набор конкретных подписчиков. Они реализуют добавочную функциональность,
+#  реагируя на извещения от издателя.
 class LoggingListener(EventListener):
     def __init__(self, log_filename: str, message: str) -> None:
         self._log = File(log_filename)
@@ -55,10 +70,21 @@ class EmailAlertsListener(EventListener):
 
 
 class Editor:
+    """
+    Конкретный класс-издатель, содержащий интересную для других компонентов бизнес-логику.
+
+    Мы могли бы сделать его прямым потомком EventManager, но в реальной жизни
+    это не всегда возможно (например, если у класса уже есть родитель).
+
+    Поэтому здесь мы подключаем механизм подписки при помощи композиции.
+    """
+
+
     def __init__(self) -> None:
         self.events = EventManager()
         self._file = None
 
+    # Методы бизнес-логики, которые оповещают подписчиков об их изменениях.
     def open_file(self, path: str) -> None:
         self._file = File(path)
         self.events.notify('open', self._file.name)
@@ -69,6 +95,9 @@ class Editor:
 
 
 if __name__ == '__main__':
+    # Приложение может сконфигурировать издателей и подписчиков как угодно, в
+    # зависимости от целей и окружения.
+
     editor = Editor()
 
     logger = LoggingListener('/path/to/log.txt', 'som on ope file')
